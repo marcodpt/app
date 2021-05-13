@@ -3,6 +3,7 @@ import {app} from './index.js'
 
 const counter = function (state, render) {
   state.count = isNaN(state.count) ? 0 : parseInt(state.count)
+  console.log(state)
 
   return h("main", {}, [
     h("p", {}, text("The current count is: "+state.count)),
@@ -19,24 +20,21 @@ const counter = function (state, render) {
     h("button", {
       onclick: () => {
         setTimeout(function () {
-          render(state => {
-            state.count += 10
-          })
+          state.count += 10
+          render()
         }, 1000)
       }
     }, text("+10 in 1sec")),
     h("button", {
       onclick: () => {
-        render(state => {
-          state.count -= 1
-        })
+        state.count -= 1
+        render()
       }
     }, text("-")),
     h("button", {
       onclick: () => {
-        render(state => {
-          state.count += 1
-        })
+        state.count += 1
+        render()
       }
     }, text("+"))
   ])
@@ -47,20 +45,6 @@ const todo = function (state, render) {
   state.todo = state.todo || ''
 
   return h("main", {}, [
-    h("div", {},
-      state.todos.map((todo, i) =>
-        h("div", {}, [
-          h("button", {
-            onclick: () => {
-              render(state => {
-                state.todos.splice(i, 1)
-              })
-            }
-          }, text("remove")),
-          h("span", {}, text(todo))
-        ])
-      )
-    ),
     h("section", {}, [
       h("button", {
         onclick: () => {
@@ -77,44 +61,75 @@ const todo = function (state, render) {
         value: state.todo,
         style: 'display: inline-block',
         oninput: ({target}) => {
-          render(state => {
-            state.todo = target.value
-          })
+          state.todo = target.value
+          render()
         }
       }),
       h("button", {
         onclick: () => {
-          render(state => {
-            state.todos.push(state.todo)
-            state.todo = ""
-          })
+          state.todos.push(state.todo)
+          state.todo = ""
+          render()
         }
       }, text("Add"))
-    ])
+    ]),
+    h("div", {},
+      state.todos.map((todo, i) =>
+        h("div", {}, [
+          h("button", {
+            onclick: () => {
+              state.todos.splice(i, 1)
+              render()
+            }
+          }, text("remove")),
+          h("span", {}, text(todo))
+        ])
+      )
+    )
   ])
 }
 
 const parent = function (state, render) {
-  if (state.child1 == null) {
-    app(vdom => {
-      render(state => {
-        state.child1 = vdom
-      })
-    }, counter, {count: 13})
-  }
-  if (state.child2 == null) {
-    app(vdom => {
-      render(state => {
-        state.child2 = vdom
-      })
-    }, counter, {count: 17})
+  const sub = (state, key, comp, init) => {
+    if (state[key] == null) {
+      state[key] = {}
+      state[key].state = init || {}
+      state[key].render = app(vdom => {
+        state[key].vdom = vdom
+        render()
+      }, comp, state[key].state)
+    }
   }
 
+  state.toggle = state.toggle == null ? false : state.toggle
+  sub(state, 'child1', counter, {count: 13})
+  sub(state, 'child2', counter, {count: 17})
+
   return h('main', {}, [
+    h('div', {}, [
+      h('button', {
+        onclick: () => {
+          render(state.toggle)
+          state.toggle = !state.toggle
+          render()
+        }
+      }, text(state.toggle ? 'play Me' : 'stop Me!')),
+      h('button', {
+        onclick: () => {
+          state.child1.render(false)
+        }
+      }, text('stop1!')),
+      h('button', {
+        onclick: () => {
+          state.child2.state.count = 1
+          state.child2.render()
+        }
+      }, text('child2 => 1'))
+    ]),
     h('p', {}, text('first child')),
-    state.child1,
+    state.child1.vdom,
     h('p', {}, text('second child')),
-    state.child2
+    state.child2.vdom
   ])
 }
 
