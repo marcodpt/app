@@ -1,147 +1,119 @@
-import {h, text, patch} from 'https://unpkg.com/superfine'
-import {app} from './index.js'
+import {app} from 'https://cdn.jsdelivr.net/gh/marcodpt/app/index.js'
 
-const counter = function (state, render) {
+const counter = (h, state) => {
   state.count = isNaN(state.count) ? 0 : parseInt(state.count)
-  console.log(state)
 
-  return h("main", {}, [
-    h("p", {}, text("The current count is: "+state.count)),
+  return h("main", [
+    h('h2', state.title || 'Counter'),
+    h("p", "The current count is: "+state.count),
     h("button", {
       onclick: () => {
-        render(false)
-      }
-    }, text("stop!")),
-    h("button", {
-      onclick: () => {
-        render(true)
-      }
-    }, text("start")),
-    h("button", {
-      onclick: () => {
-        setTimeout(function () {
+        setTimeout(() => {
           state.count += 10
-          render()
-        }, 1000)
+          h()
+        }, 3000)
       }
-    }, text("+10 in 1sec")),
+    }, "+10 in 3sec"),
     h("button", {
       onclick: () => {
         state.count -= 1
-        render()
       }
-    }, text("-")),
+    }, "-"),
     h("button", {
       onclick: () => {
         state.count += 1
-        render()
       }
-    }, text("+"))
+    }, "+"),
+    state.title ? null : h('a', {
+      href: '#counter?15'
+    }, 'force 15 via #hash')
   ])
 }
 
-const todo = function (state, render) {
+const todo = (h, state) => {
   state.todos = state.todos || []
   state.todo = state.todo || ''
 
-  return h("main", {}, [
-    h("section", {}, [
-      h("button", {
-        onclick: () => {
-          render(false)
-        }
-      }, text("stop!")),
-      h("button", {
-        onclick: () => {
-          render(true)
-        }
-      }, text("start")),
+  return h("main", [
+    h('h2', 'Todo'),
+    h("section", [
       h("input", {
         type: "text",
         value: state.todo,
-        style: 'display: inline-block',
+        class: [
+          ' an strange  array  test ',
+          null,
+          false,
+          'below is a style sugar',
+          'test'
+        ],
+        style: {
+          display: 'inline-block',
+          verticalAlign: 'middle'
+        },
+        dataBsTarget: '#testCamelToKebab',
         oninput: ({target}) => {
           state.todo = target.value
-          render()
         }
       }),
       h("button", {
         onclick: () => {
           state.todos.push(state.todo)
           state.todo = ""
-          render()
         }
-      }, text("Add"))
+      }, "Add")
     ]),
-    h("div", {},
+    h("div",
       state.todos.map((todo, i) =>
         h("div", {}, [
           h("button", {
             onclick: () => {
               state.todos.splice(i, 1)
-              render()
             }
-          }, text("remove")),
-          h("span", {}, text(todo))
+          }, "remove"),
+          h("span", {}, todo)
         ])
       )
     )
   ])
 }
 
-const parent = function (state, render) {
-  const sub = (state, key, comp, init) => {
-    if (state[key] == null) {
-      state[key] = {}
-      state[key].state = init || {}
-      state[key].render = app(vdom => {
-        state[key].vdom = vdom
-        render()
-      }, comp, state[key].state)
-    }
-  }
-
-  state.toggle = state.toggle == null ? false : state.toggle
-  sub(state, 'child1', counter, {count: 13})
-  sub(state, 'child2', counter, {count: 17})
-
-  return h('main', {}, [
-    h('div', {}, [
-      h('button', {
-        onclick: () => {
-          render(state.toggle)
-          state.toggle = !state.toggle
-          render()
-        }
-      }, text(state.toggle ? 'play Me' : 'stop Me!')),
-      h('button', {
-        onclick: () => {
-          state.child1.render(false)
-        }
-      }, text('stop1!')),
-      h('button', {
-        onclick: () => {
-          state.child2.state.count = 1
-          state.child2.render()
-        }
-      }, text('child2 => 1'))
-    ]),
-    h('p', {}, text('first child')),
-    state.child1.vdom,
-    h('p', {}, text('second child')),
-    state.child2.vdom
+const parent = h =>
+  h('main', [
+    h('h2', 'Parent and children'),
+    h('child1', counter, {count: 13, title: 'first child'}),
+    h('p', 'second child'),
+    h('child2', counter, {count: 17, title: 'second child'})
   ])
-}
 
-const builder = function (id) {
-  var e = document.getElementById(id)
-  return function (vdom) {
-    if (e) {
-      e = patch(e, vdom)
-    }
+var view = () => {}
+const scope = {}
+var old = null
+const tick = () => {
+  const H = location.hash.split('?', 2)
+  if (old != H[0]) {
+    view()
   }
+  const el = document.getElementById('app')
+  if (H[0] == '#counter') {
+    scope.count = H[1] || 3
+    if (old == H[0]) {
+      view(true)
+    } else {
+      view = app(el, counter, scope)
+    }
+  } else if (H[0] == '#todo') {
+    view = app(el, todo)
+  } else if (H[0] == '#parent') {
+    view = app(el, parent)
+  } else {
+    view = app(el, h => h('main'))
+  }
+  old = H[0]
 }
 
-app(builder('counter'), counter, {count: 3})
-app(builder('todo'), todo)
-app(builder('parent'), parent)
+window.addEventListener('hashchange', tick)
+window.addEventListener('load', () => {
+  location.hash = '#counter'
+  tick()
+})
