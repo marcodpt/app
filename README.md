@@ -3,7 +3,7 @@ Ultra minimalistic [hyperscript](https://github.com/hyperhype/hyperscript) compo
 
 ## Motivation
  - I think [hyperscript](https://github.com/hyperhype/hyperscript) is the correct way of use virtual dom, because there is no better template language than javascript with functional composition.
- - I hate to work with build steps in the front end application so I don't like JSX and even Svelte.
+ - I hate to work with build steps in the front end application so I don't like [JSX](https://reactjs.org/docs/introducing-jsx.html) and even [Svelte](https://svelte.dev/).
  - I think [superfine](https://github.com/jorgebucaran/superfine) is the most beautiful front end javascript framework ever inventend.
  - And I think [hyperapp](https://github.com/jorgebucaran/hyperapp) is the correct way of doing things with pure functions.
 
@@ -139,7 +139,7 @@ This examples has no utility for the component, but I want to introduce this thi
 The rest is self explanatory, at the beginning of component some `state` sanitization logic, again you can watch browser events or do async calls here. For everything outside the normal flow call `h()` for a rerender. All other functions calls do it by itself without the need for do this manually. So when you click `add` button it will work flawlessly, at least I hope so :).
 
 ### Parent and child. How to scale?
-```
+```js
 import {app} from 'https://cdn.jsdelivr.net/gh/marcodpt/app/index.js'
 import {counter} from '/path/to/counter/component/index.js'
 
@@ -167,7 +167,7 @@ So when the second parameter of `h` is a function it will store in the `state.ch
 Here we have two absolutely independent `counter` components with they own `states`
 
 ### Outside world comunication
-```
+```js
 import {app} from 'https://cdn.jsdelivr.net/gh/marcodpt/app/index.js'
 import {table} from '/path/to/table/component/index.js'
 import {profile} from '/path/to/profile/component/index.js'
