@@ -1,6 +1,10 @@
 # App
 Ultra minimalistic [hyperscript](https://github.com/hyperhype/hyperscript) component based front end javascript framework based on [superfine](https://github.com/jorgebucaran/superfine)
 
+[Live example](https://marcodpt.github.io/app/)
+
+[Live example Source](https://github.com/marcodpt/app/blob/main/examples.js))
+
 ## Motivation
  - I think [hyperscript](https://github.com/hyperhype/hyperscript) is the correct way of use virtual dom, because there is no better template language than javascript with functional composition.
  - I hate to work with build steps in the front end application so I don't like [JSX](https://reactjs.org/docs/introducing-jsx.html) and even [Svelte](https://svelte.dev/).
@@ -14,6 +18,8 @@ Ultra minimalistic [hyperscript](https://github.com/hyperhype/hyperscript) compo
 
 ## Examples
 Please check the live working [example](https://marcodpt.github.io/app/)
+
+If you want to understand it code look it easy to follow [source](https://github.com/marcodpt/app/blob/main/examples.js) 
 
 Some [superfine](https://github.com/jorgebucaran/superfine) knowledge is desirable to understand deep what has been done. But is not absolutely necessary.
 
@@ -209,9 +215,11 @@ When you call `view` with falsy first param it will stop the `oldComponent` from
 When you call `view` with a truthy first param it will rerender the `component` with the updated `id`. Observe that components can't change it `state` object and the variable `Data` is garanteed to store the `state` of the component. 
 
 ## Contributing
-So if you read until now, you probabily master this project because it is a single `index.js` javascript es6 module file with [superfine](https://github.com/jorgebucaran/superfine) as a dependency.
+So if you read until now, you probabily master this project because it is a single [index.js](https://github.com/marcodpt/app/blob/main/index.js) javascript es6 module file with [superfine](https://github.com/jorgebucaran/superfine) as a dependency.
 
 The file has less than a hundred lines of code, and I include a lot of desnecessary things, like most of `h` overloads. So the logic there is very small and any one could master it. Don't fear this file it is very easy to follow.
+
+The live example is a great way to master the `app`! Look without fear the easy reading [examples.js](https://github.com/marcodpt/app/blob/main/examples.js)  
 
 There is no guidelines for contributing, any help is greatly appreciated!
 
