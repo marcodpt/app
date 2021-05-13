@@ -3,7 +3,7 @@ Ultra minimalistic [hyperscript](https://github.com/hyperhype/hyperscript) compo
 
 [Live example](https://marcodpt.github.io/app/)
 
-[Live example Source](https://github.com/marcodpt/app/blob/main/examples.js))
+[Live example Source](https://github.com/marcodpt/app/blob/main/examples.js)
 
 ## Motivation
  - I think [hyperscript](https://github.com/hyperhype/hyperscript) is the correct way of use virtual dom, because there is no better template language than javascript with functional composition.
