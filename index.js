@@ -13,12 +13,17 @@ const app = (run, component, state) => {
         render()
       } else if (typeof attributes == 'function') {
         if (state[tagName] == null) {
-          app(vdom => {
-            state[tagName] = vdom
+          const rerender = app(vdom => {
+            state[tagName] = {
+              vdom: vdom,
+              render: () => {
+                rerender(true)
+              }
+            }
             render()
           }, attributes, children || {})
         }
-        return state[tagName]
+        return state[tagName].vdom
       } else {
         if (attributes instanceof Array || typeof attributes != 'object') {
           children = attributes

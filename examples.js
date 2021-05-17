@@ -1,7 +1,10 @@
 import {app} from 'https://cdn.jsdelivr.net/gh/marcodpt/app/index.js'
+import {query} from 'https://cdn.jsdelivr.net/gh/marcodpt/query/index.js'
+import {router} from 'https://cdn.jsdelivr.net/gh/marcodpt/router/index.js'
 
 const counter = (h, state) => {
   state.count = isNaN(state.count) ? 0 : parseInt(state.count)
+  const hash = '#/counter?count=15'
 
   return h("main", [
     h('h2', state.title || 'Counter'),
@@ -24,8 +27,8 @@ const counter = (h, state) => {
         state.count += 1
       }
     }, "+"),
-    state.title ? null : h('a', {
-      href: '#counter?15'
+    state.title || location.hash == hash ? null : h('a', {
+      href: hash
     }, 'force 15 via #hash')
   ])
 }
@@ -86,34 +89,67 @@ const parent = h =>
     h('child2', counter, {count: 17, title: 'second child'})
   ])
 
-var view = () => {}
-const scope = {}
-var old = null
-const tick = () => {
-  const H = location.hash.split('?', 2)
-  if (old != H[0]) {
-    view()
-  }
-  const el = document.getElementById('app')
-  if (H[0] == '#counter') {
-    scope.count = H[1] || 3
-    if (old == H[0]) {
-      view(true)
-    } else {
-      view = app(el, counter, scope)
+const page = (h, state) => {
+  if (state.lastPath === undefined) {
+    state.Attributes = null
+    state.component = null
+    state.lastPath = null
+
+    const setRoute = (path, comp) => {
+      router(path, ctx => {
+        if (state.lastPath != path) {
+          state.Attributes = {}
+          delete state.child
+        }
+        Object.assign(state.Attributes, query(ctx.query), ctx.params)
+
+        if (state.lastPath == path) {
+          state.child.render()
+        }
+        state.lastPath = path
+        state.component = comp
+        h()
+      })
     }
-  } else if (H[0] == '#todo') {
-    view = app(el, todo)
-  } else if (H[0] == '#parent') {
-    view = app(el, parent)
-  } else {
-    view = app(el, h => h('main'))
+
+    setRoute('/counter', counter)
+    setRoute('/todo', todo)
+    setRoute('/parent', parent)
+    setRoute('*', () => {
+      location.hash = '#/counter'
+    })
+
+    const tick = () => {
+      console.log('tick')
+      router(location.hash.substr(1))
+    }
+    window.addEventListener('hashchange', tick)
+    window.addEventListener('load', tick)
   }
-  old = H[0]
+
+  return h('body', [
+    h('h1', 'App'),
+    h('p', 'A component approach to superfine!'),
+    h('ul', [
+      h('li', [
+        h('a', {
+          href: "#/counter"
+        }, 'Counter')
+      ]),
+      h('li', [
+        h('a', {
+          href: "#/todo"
+        }, 'Todo')
+      ]),
+      h('li', [
+        h('a', {
+          href: "#/parent"
+        }, 'Parent and children')
+      ]),
+    ]),
+    state.component == null ? null :
+      h('child', state.component, state.Attributes)
+  ])
 }
 
-window.addEventListener('hashchange', tick)
-window.addEventListener('load', () => {
-  location.hash = '#counter'
-  tick()
-})
+app(document.body, page)
