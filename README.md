@@ -10,11 +10,20 @@
 import {app} from 'https://cdn.jsdelivr.net/gh/marcodpt/app/index.js'
 
 const counter = (h, state) => {
-  //state is always an object
+  //state is always an object do your sanitization and async calls here!
   state.count = isNaN(state.count) ? 0 : parseInt(state.count)
 
   return h("main", [
     h("p", "The current count is: "+state.count),
+    h("button", {
+      onclick: () => {
+        setTimeout(() => {
+          state.count += 10
+          h()
+          //use h() to rerender component, you can use it in any async call
+        }, 3000)
+      }
+    }, "+10 in 3sec"),
     h("button", {
       onclick: () => {
         state.count -= 1
@@ -36,7 +45,7 @@ app(
 )
 ```
 
-### Parent and child. How to scale?
+## Parent and child. How to scale?
 ```js
 import {app} from 'https://cdn.jsdelivr.net/gh/marcodpt/app/index.js'
 //counter is the same component as defined above
