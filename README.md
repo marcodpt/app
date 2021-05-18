@@ -69,26 +69,16 @@ const parent = {
   view: (state, update) => 
     h('main', {}, [
       h('h2', {}, 'Parent and children'),
-      sub(update, 'child1', counter, {
+      sub(state, update, 'child1', counter, {
         count: 13,
         title: 'first child'
       }),
-      sub(update, 'child2', counter, {
+      sub(state, update, 'child2', counter, {
         count: 17,
         title: 'second child'
       })
     ])
 }
-
-const parent = h =>
-  h('main', [
-    h('h2', 'Parent and children'),
-    //this is a component child1, based on counter and with initial state
-    h('child1', counter, {count: 13, title: 'first child'}),
-    h('p', 'second child'),
-    //this is a component child2
-    h('child2', counter, {count: 17, title: 'second child'})
-  ])
 
 app(
   vDom => patch(     //the onChange function build with help of superfine patch
