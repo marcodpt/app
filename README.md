@@ -60,7 +60,7 @@ app(
 
 ## Parent and child. How to scale?
 ```js
-import {app} from 'https://cdn.jsdelivr.net/gh/marcodpt/app/index.js'
+import {app, sub} from 'https://cdn.jsdelivr.net/gh/marcodpt/app/index.js'
 //counter is the same component as defined above
 import {counter} from '/path/to/counter/component/index.js'
 import {h, text, patch} from 'https://unpkg.com/superfine'
