@@ -1,4 +1,4 @@
-import {app, sub} from './index.js'
+import {app, sub} from 'https://cdn.jsdelivr.net/gh/marcodpt/app/index.js'
 import {query} from 'https://cdn.jsdelivr.net/gh/marcodpt/query/index.js'
 import {router} from 'https://cdn.jsdelivr.net/gh/marcodpt/router/index.js'
 import {h, text, patch} from 'https://unpkg.com/superfine'
