@@ -146,8 +146,14 @@ const page = {
   },
   view: (state, update) =>  {
     return h('body', {}, [
+      h('a', {
+        class: 'github-fork-ribbon',
+        href: 'https://github.com/marcodpt/app',
+        'data-ribbon': 'Fork me on GitHub',
+        title: 'Fork me on GitHub'
+      }, text('Fork me on GitHub')),
       h('h1', {}, text('App')),
-      h('p', {}, text('A component approach to superfine!')),
+      h('p', {}, text('A component approach to vDom!')),
       h('ul', {}, [
         h('li', {}, [
           h('a', {
