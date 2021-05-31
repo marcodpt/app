@@ -80,7 +80,9 @@ const todo = {
         h("div", {}, [
           h("button", {
             onclick: () => {
-              state.todos.splice(i, 1)
+              update(state => {
+                state.todos.splice(i, 1)
+              })
             }
           }, text("remove")),
           h("span", {}, text(todo))

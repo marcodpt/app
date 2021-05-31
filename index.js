@@ -34,17 +34,15 @@ const app = (onChange, component, attrs) => {
 }
 
 const sub = (state, update, key, component, attrs) => {
+  if (!component || !component.view) {
+    return null
+  }
   if (state[key] == null) {
-    update(state => {
-      state[key] = {vDom: null}
-      if (typeof component == 'object') {
-        state[key].change = app(vDom => {
-          update(state => {
-            state[key].vDom = vDom
-          })
-        }, component, attrs)
-      }
-    })
+    state[key] = {}
+    state[key].change = app(vDom => {
+      state[key].vDom = vDom
+      update()
+    }, component, attrs)
   }
   return state[key].vDom
 }
