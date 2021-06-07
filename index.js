@@ -47,4 +47,13 @@ const sub = (state, update, key, component, attrs) => {
   return state[key].vDom
 }
 
-export {app, sub}
+const change = (state, key, attrs) => {
+  if (state[key] != null && typeof state[key].change == 'function') {
+    state[key].change(attrs)
+    if (attrs == null) {
+      delete state[key]
+    }
+  }
+}
+
+export {app, sub, change}

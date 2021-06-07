@@ -1,4 +1,4 @@
-import {app, sub} from 'https://cdn.jsdelivr.net/gh/marcodpt/app/index.js'
+import {app, sub, change} from './index.js'
 import {query} from 'https://cdn.jsdelivr.net/gh/marcodpt/query/index.js'
 import {router} from 'https://cdn.jsdelivr.net/gh/marcodpt/router/index.js'
 import {h, text, patch} from 'https://unpkg.com/superfine'
@@ -113,17 +113,12 @@ const page = {
         router(path, ctx => {
           update(state => {
             if (state.lastPath != path) {
-              if (state.child && state.child.change) {
-                state.child.change()
-              }
-              delete state.child
+              change(state, 'child')
             }
             state.Attributes = {}
             Object.assign(state.Attributes, query(ctx.query), ctx.params)
+            change(state, 'child', state.Attributes)
 
-            if (state.lastPath == path) {
-              state.child.change(state.Attributes)
-            }
             state.lastPath = path
             state.component = comp
           })

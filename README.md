@@ -108,5 +108,11 @@ Create a child component inside a component!
  - object `component`: an object that defines a `component` in the same way as `app` API.
  - object `attrs`: an object that defines the initial `attrs` in the same way as `app` API.
 
+### change(state, key, attrs)
+Update a child component registered in `key`!
+ - object `state`: the current `parent` `state` object
+ - string `key`: the `state` `key` that is stored `child` component information.
+ - object `attrs`: an object that update child `attrs`, if `attrs` is null the `sub` component will be destroyed.
+
 ## Contributing
 There is no guidelines for contributing, any help is greatly appreciated!
