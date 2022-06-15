@@ -320,7 +320,8 @@ export default ({
               title: config.CSV_LABEL,
               ui: config.CSV_UI,
               icon: config.CSV_ICON,
-              href: csv(schema.items.properties, 'a.csv', `${table}.csv`,
+              href: csv(config,
+                schema.items.properties, 'a.csv', `${table}.csv`,
                 resolveHref({
                   _skip: null,
                   _limit: null

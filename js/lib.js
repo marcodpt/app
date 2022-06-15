@@ -1,6 +1,5 @@
 import {query, html} from './dependencies.js'
 import navbar from './navbar.js'
-import config from './config.js'
 
 const getIcon = ui => (ui || '').split('\n')[1]
 
@@ -105,9 +104,9 @@ const download = (name, data) => {
   document.body.removeChild(link)
 }
 
-const csv = (P, selector, name, url) => {
-  const nl = config.csv.newLine
-  const sep = config.csv.separator
+const csv = (config, P, selector, name, url) => {
+  const nl = config.CSV_NEW_LINE
+  const sep = config.CSV_SEPARATOR
 
   window.csv = () => {
     const link = document.body.querySelector(selector)
