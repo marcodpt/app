@@ -60,21 +60,7 @@ const errorHandler = (method, url, Params, title) => err => {
   console.log('****** ERROR ******')
   console.log(method+' '+url)
   console.log(JSON.stringify(Params, undefined, 2))
-  console.log(err)
-
-  if (err == 'UNAUTHORIZED') {
-    navbar()
-  }
-
-  if (err == 'UNAUTHORIZED' || location.hash.substr(1, 7) != '/error/') {
-    location.href = '#/error/'+(
-      typeof err == "object" ? 'CONNECTION' :
-      typeof err == "string" && err ? err :
-        'INTERNAL_SERVER_ERROR'
-    )+(title ? '/'+encodeURIComponent(title) : '')
-  } else {
-    console.log('****** STOP ******')
-  }
+  throw err
 }
 
 const get = (url, Params) => fetch(setParams(url, addToken(Params)))

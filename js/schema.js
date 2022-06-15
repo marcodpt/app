@@ -292,7 +292,7 @@ export default ({
               icon: config.CLEAR_ICON
             }])
             .concat([{
-              rel: 'search' 
+              rel: 'search',
               href: "javascript:setSearch('{}')",
               hrefSchema: {
                 title: 'search',

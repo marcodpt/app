@@ -1,4 +1,4 @@
-export default ({graph, get}) => ({id}) => {
+export default ({id}, {graph, get}) => {
   var vertices = ''
   var edges = ''
 

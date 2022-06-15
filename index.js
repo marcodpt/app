@@ -1,14 +1,15 @@
-import {wrap, post, get} from './lib.js'
-import schema from './schema.js'
-import {jsb, graph, query, spa} from './dependencies.js'
-import viewer from './viewer.js'
-import upload from './upload.js'
-import nav from './navbar.js'
-import config from './config.js'
+import {jsb, graph, query, spa, html, chart} from './js/dependencies.js'
+import {wrap, post, get} from './js/lib.js'
+import cnf from './js/config.js'
 import lang from './lang/index.js'
+import schema from './js/schema.js'
+import grapher from './js/graph.js'
+import upload from './js/upload.js'
+import viewer from './js/viewer.js'
+import nav from './js/navbar.js'
 
-const Config = {
-  ...config,
+var config = {
+  ...cnf,
   ...lang.en,
   routes: [
     {
@@ -19,7 +20,7 @@ const Config = {
       view: schema
     }, {
       path: '/graph/:id',
-      view: graph
+      view: grapher
     }, {
       path: '/:name',
       view: viewer
@@ -30,65 +31,72 @@ const Config = {
   ]
 }
 
-const navbar = (config) => {
-  Config.navbar = config
+const navbar = (cnf) => {
+  config.navbar = cnf
 }
 
 const route = (path, view) => {
-  Config.routes.push({
+  config.routes.push({
     path: path,
     view: view
   })
 }
 
 const start = ({
-  language,
-  ...config
+  LANGUAGE,
+  ...cnf
 }) => {
-  if (language && lang[language]) {
-    Config = {
-      ...Config,
-      ...lang[language],
-      LANGUAGE: language
+  if (LANGUAGE && lang[LANGUAGE]) {
+    config = {
+      ...config,
+      ...lang[LANGUAGE],
+      LANGUAGE: LANGUAGE
     }
   }
-  Config = {
-    ...Config,
-    ...config
+  config = {
+    ...config,
+    ...cnf
   }
 
   const getUrl = () => location.hash.substr(1)
   var update = () => {}
   const navbar = (cnf) => {
-    if (Config.navbar || cnf) {
+    if (config.navbar || cnf) {
       nav({
-        ...(Config.navbar || {}),
+        ...(config.navbar || {}),
         ...(cnf || {})
       })
     }
   }
+
+  const back = {
+    rel: 'self',
+    href: 'javascript:history.back()',
+    title: config.BACK_LABEL,
+    ui: config.BACK_UI,
+    icon: config.BACK_ICON
+  }
+
   const Deps = {
+    config: config,
+    wrap: wrap,
+    get: get,
+    post: post(navbar),
+    back: back,
+    html: html,
+    graph: graph,
+    chart: chart,
     jsb: (attrs) => {
       if (attrs.options == null) {
         attrs.options = {}
       }
       if (attrs.options.language == null) {
-        attrs.options.language = Config.LANGUAGE
+        attrs.options.language = config.LANGUAGE
       }
       if (attrs.options.loader == null) {
         attrs.options.loader = get
       }
       return jsb(attrs)
-    },
-    wrap: wrap,
-    get: get,
-    post: post(navbar),
-    back: {
-      rel: 'self',
-      href: 'javascript:history.back()',
-      title: Config.BACK_LABEL,
-      ui: Config.BACK_UI,
-      icon: Config.BACK_ICON
     }
   }
 
@@ -106,33 +114,40 @@ const start = ({
           path: '*',
           view: () => home.cloneNode(true)
         }
-      ]).map(R => {
-        R.view = (params, extra) =>
+      ]).map(R => ({
+        path: R.path,
+        view: (params, extra) =>
           Promise.resolve(R.view(params, {
             ...Deps,
             ...extra
           })).catch(err => {
-            var msg = Config.ERROR_INTERNAL_SERVER_ERROR
+            var msg = config.ERROR_INTERNAL_SERVER_ERROR
             if (
               typeof err == "string" &&
               err.substr(0, 6) == "ERROR_" &&
-              Config[err]
+              config[err]
             ) {
-              msg = Config[err]
+              msg = config[err]
+              if (err == 'ERROR_UNAUTHORIZED') {
+                navbar()
+              }
             }
+            console.log(err)
             return wrap(jsb({
               schema: {
-                title: Config.ERROR_TITLE,
+                title: config.ERROR_TITLE,
                 description: msg,
                 ui: 'card',
                 format: 'danger',
-                href: err == 'ERROR_UNAUTHORIZED' ? '#/api/login/users' :
-                  'javascript:history.back()'
+                links: [{
+                  ...back,
+                  href: err == 'ERROR_UNAUTHORIZED' ?
+                    '#/api/login/users' : back.href
+                }]
               }
             }))
           })
-        return R
-      }),
+      })),
       update: callback => {
         update = callback
       }

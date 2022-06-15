@@ -60,7 +60,7 @@ navbar({
   ]
 })
 
-route('/chart/:id', ({html, jsb, chart, graph, get, post}) => ({id}) => 
+route('/chart/:id', ({id}, {html, jsb, chart, graph, get, post}) => 
   get('api/get/tables?_filter[]=id~gt~1')
     .then(data => chart((data || []).reduce((R, row) => {
       R.X.push(row.title)
@@ -85,6 +85,7 @@ route('/chart/:id', ({html, jsb, chart, graph, get, post}) => ({id}) =>
 )
 
 start({
+  LANGUAGE: 'pt',
   QUERY: {
     _limit: 10,
     _skip: 0

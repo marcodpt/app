@@ -1,4 +1,4 @@
-export default ({get, post, wrap, jsb, back}) => () => wrap(jsb({
+export default (params, {get, post, wrap, jsb, back}) => wrap(jsb({
   schema: {
     title: 'Upload de arquivos',
     properties: {

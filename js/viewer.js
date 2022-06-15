@@ -1,6 +1,4 @@
-export default ({
-  jsb, wrap, get, back
-}) => ({name}) => get('api/files?id_='+name)
+export default ({name}, {jsb, wrap, get, back}) => get('api/files?id_='+name)
   .then(data => {
     if (!data[0]) {
       throw 'ERROR_NOT_FOUND'
