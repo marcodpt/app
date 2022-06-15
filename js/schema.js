@@ -288,7 +288,7 @@ export default ({
             .concat([{
               rel: 'search',
               href: "javascript:setSearch('')",
-              ui: config.CLEAR_UI,
+              ui: config.BACK_UI,
               icon: config.CLEAR_ICON
             }])
             .concat([{

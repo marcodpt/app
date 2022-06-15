@@ -60,6 +60,13 @@ export default (config) => {
 
   get('api/whoami/users').then(data => {
     uid = data
+  }).catch(err => {
+    if (err == 'ERROR_UNAUTHORIZED') {
+      return get('api/whoami/users')
+    }
+    throw err
+  }).then(data => {
+    uid = data
     return get(`api/users/${uid}`)
   }).then(data => {
     user = data
