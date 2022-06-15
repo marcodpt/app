@@ -58,9 +58,7 @@ export default (config) => {
   var user = null
   var nav = null
 
-  get('api/whoami/users').then(data => {
-    uid = data
-  }).catch(err => {
+  get('api/whoami/users').catch(err => {
     if (err == 'ERROR_UNAUTHORIZED') {
       return get('api/whoami/users')
     }
