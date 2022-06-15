@@ -1,4 +1,6 @@
-import {navbar, route, start} from './index.js'
+import {
+  navbar, route, start
+} from 'https://cdn.jsdelivr.net/gh/marcodpt/app@0.0.1/index.js'
 
 navbar({
   type: 'dark',
