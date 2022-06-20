@@ -16,7 +16,7 @@ const mapLink = ({
   icon: getIcon(ui)
 }) 
 
-const urlCmp = (a, b) => decodeURI(a) == decodeURI(b)
+const urlCmp = (a, b) => decodeURIComponent(a) == decodeURIComponent(b)
 
 const resolveHref = (X, uri) => {
   const href = typeof uri != "string" ? window.location.hash : uri
@@ -31,7 +31,7 @@ const resolveHref = (X, uri) => {
 
   if (uri === true) {
     if (!urlCmp(href, url)) {
-      location.replace(decodeURI(url))
+      location.replace(url)
     }
   } else {
     return uri != null ? url :
@@ -117,9 +117,15 @@ const updateSchema = (config, schema, readOnly, X) => {
 }
 
 const cache = {
-  url: null,
-  data: null,
-  operators: null
+  operators: null,
+  aggregate: {
+    url: null,
+    data: null
+  },
+  count: {
+    url: null,
+    data: null
+  }
 }
 
 const getF = () => {
@@ -183,6 +189,8 @@ export default ({
   const url = path+(q ? `?${q}` : '')
 
   if (service != 'get') {
+    cache.aggregate.url = null
+    cache.count.url = null
     var res = null
     return get(`response/${path}`).then(response => {
       res = response
@@ -190,7 +198,7 @@ export default ({
       return get(`request/${path}`)
     }).then(schema => {
       if (!schema) {
-        throw ERROR_FORBIDDEN
+        throw 'ERROR_FORBIDDEN'
       }
 
       const L = (schema.links || [])[0]
@@ -234,16 +242,18 @@ export default ({
       }))
     })
   } else if (id != null) {
+    cache.aggregate.url = null
+    cache.count.url = null
     var schema = null
     return get(`response/${path}`).then(res => {
       if (!res) {
-        throw ERROR_FORBIDDEN
+        throw 'ERROR_FORBIDDEN'
       }
       schema = res
       return schema ? get(path) : null
     }).then(data => {
       if (!data) {
-        throw ERROR_FORBIDDEN
+        throw 'ERROR_FORBIDDEN'
       }
       schema = {
         ...schema,
@@ -279,7 +289,7 @@ export default ({
       .then(res => {
         schema = res
         if (!schema || !schema.items) {
-          throw ERROR_FORBIDDEN
+          throw 'ERROR_FORBIDDEN'
         }
         schema.items = updateSchema(config, schema.items, true, Q)
         if (schema.links) {
@@ -313,7 +323,22 @@ export default ({
               rel: 'search',
               title: config.GROUP_LABEL,
               ui: config.GROUP_UI,
-              icon: config.GROUP_ICON
+              icon: Q._group != null ? config.CLEAR_ICON : config.GROUP_ICON,
+              href: resolveHref({
+                _group: Q._group == null ? '__group__' : null
+              }).replace('__group__', '{}'),
+              hrefSchema: Q._group != null ? null : {
+                ui: 'multiple',
+                default: [],
+                minItems: 1,
+                items: {
+                  enum: Object.keys(schema.items.properties),
+                  labels: Object.keys(schema.items.properties).map(key => {
+                    const P = schema.items.properties[key]
+                    return P.title == null ? key : P.title
+                  })
+                }
+              }
             }])
             .concat([{
               rel: 'search',
@@ -336,83 +361,100 @@ export default ({
           _limit: null,
           _sort: null
         }, url)
-        if (cache.url === target) {
-          return cache.data
+        if (urlCmp(cache.aggregate.url, target)) {
+          return cache.aggregate.data
         } else {
-          cache.url = target
-          cache.data = false
+          cache.aggregate.url = target
+          cache.aggregate.data = false
           return get(target)
         }
       })
       .then(row => {
         if (row && row[0]) {
-          if (cache.data === false) {
-            cache.data = row
+          if (cache.aggregate.data === false) {
+            cache.aggregate.data = row
           }
           schema.items.default = row[0]
-          const n = row[0].id || 0
-          const skip = parseInt(Q._skip) || 0
-          const limit = parseInt(Q._limit) || 0
 
-          if (limit) {
-            const pages = n == 0 ? 1 : Math.ceil(n / limit)
-            const setPage = page => {
-              if (page > pages) {
-                page = pages
-              } else if (page < 1) {
-                page = 1
-              }
-              return page
-            }
-            const page = setPage(1 + Math.floor(skip / limit))
-            const setSkip = page => String((page - 1) * limit)
-            const A = Array.from(Array(pages).keys()).map(x => parseInt(x) + 1)
-
-            schema.links = schema.links.concat([
-              {
-                rel: 'alternate',
-                ui: config.PAGINATION_UI,
-                icon: config.FIRST_ICON,
-                href: resolveHref({
-                  _skip: setSkip(setPage(1))
-                })
-              }, {
-                rel: 'alternate',
-                ui: config.PAGINATION_UI,
-                icon: config.PREVIOUS_ICON,
-                href: resolveHref({
-                  _skip: setSkip(setPage(page - 1))
-                })
-              }, {
-                rel: 'alternate',
-                href: resolveHref({
-                  _skip: '__skip__'
-                }).replace('__skip__', '{}'),
-                hrefSchema: {
-                  enum: A.map(setSkip),
-                  labels: A.map(x => config.PAGINATION_LABEL(x, pages)),
-                  default: setSkip(page)
-                }
-              }, {
-                rel: 'alternate',
-                ui: config.PAGINATION_UI,
-                icon: config.NEXT_ICON,
-                href: resolveHref({
-                  _skip: setSkip(setPage(page + 1))
-                })
-              }, {
-                rel: 'alternate',
-                ui: config.PAGINATION_UI,
-                icon: config.LAST_ICON,
-                href: resolveHref({
-                  _skip: setSkip(setPage(pages))
-                })
-              }
-            ])
+          const target = resolveHref({
+            _keys: '*',
+            _skip: null,
+            _limit: null,
+            _sort: null
+          }, url)
+          if (urlCmp(cache.count.url, target)) {
+            return cache.count.data
+          } else {
+            cache.count.url = target
+            cache.count.data = false
+            return get(target)
           }
-
-          return get(url)
         }
+      })
+      .then(n => {
+        if (cache.count.data === false) {
+          cache.count.data = n
+        }
+        const skip = parseInt(Q._skip) || 0
+        const limit = parseInt(Q._limit) || 0
+
+        if (limit) {
+          const pages = n == 0 ? 1 : Math.ceil(n / limit)
+          const setPage = page => {
+            if (page > pages) {
+              page = pages
+            } else if (page < 1) {
+              page = 1
+            }
+            return page
+          }
+          const page = setPage(1 + Math.floor(skip / limit))
+          const setSkip = page => String((page - 1) * limit)
+          const A = Array.from(Array(pages).keys()).map(x => parseInt(x) + 1)
+
+          schema.links = schema.links.concat([
+            {
+              rel: 'alternate',
+              ui: config.PAGINATION_UI,
+              icon: config.FIRST_ICON,
+              href: resolveHref({
+                _skip: setSkip(setPage(1))
+              })
+            }, {
+              rel: 'alternate',
+              ui: config.PAGINATION_UI,
+              icon: config.PREVIOUS_ICON,
+              href: resolveHref({
+                _skip: setSkip(setPage(page - 1))
+              })
+            }, {
+              rel: 'alternate',
+              href: resolveHref({
+                _skip: '__skip__'
+              }).replace('__skip__', '{}'),
+              hrefSchema: {
+                enum: A.map(setSkip),
+                labels: A.map(x => config.PAGINATION_LABEL(x, pages)),
+                default: setSkip(page)
+              }
+            }, {
+              rel: 'alternate',
+              ui: config.PAGINATION_UI,
+              icon: config.NEXT_ICON,
+              href: resolveHref({
+                _skip: setSkip(setPage(page + 1))
+              })
+            }, {
+              rel: 'alternate',
+              ui: config.PAGINATION_UI,
+              icon: config.LAST_ICON,
+              href: resolveHref({
+                _skip: setSkip(setPage(pages))
+              })
+            }
+          ])
+        }
+        return get(url)
       })
       .then(data => {
         schema.default = data
