@@ -116,18 +116,6 @@ const updateSchema = (config, schema, readOnly, X) => {
   return R
 }
 
-const cache = {
-  operators: null,
-  aggregate: {
-    url: null,
-    data: null
-  },
-  count: {
-    url: null,
-    data: null
-  }
-}
-
 const getF = () => {
   const href = window.location.hash
   const H = href.split('?')
@@ -189,8 +177,6 @@ export default ({
   const url = path+(q ? `?${q}` : '')
 
   if (service != 'get') {
-    cache.aggregate.url = null
-    cache.count.url = null
     var res = null
     return get(`response/${path}`).then(response => {
       res = response
@@ -242,8 +228,6 @@ export default ({
       }))
     })
   } else if (id != null) {
-    cache.aggregate.url = null
-    cache.count.url = null
     var schema = null
     return get(`response/${path}`).then(res => {
       if (!res) {
@@ -278,11 +262,52 @@ export default ({
       return null
     }
 
-    return Promise.resolve(cache.operators != null ? cache.operators :
-      get('api/operators?_keys=id,name,title,booleans_id_strict:strict')
-    )
-      .then(operators => {
-        cache.operators = operators 
+    const Filters = []
+
+    return get('api/operators?_keys=id,name,title,booleans_id_strict:strict')
+      .then(operators => Promise.all((Q._filter || [])
+        .filter(x => x.indexOf('_~ct~') != 0)
+        .map(x => {
+          var url = null
+          operators.forEach(op => {
+            if (url == null && x.indexOf(op.name) > 0) {
+              const X = x.split(op.name)
+              const field = X.shift()
+              const value = X.join(op.name)
+              url = op.strict == 0 || field != keyBase(field) ? null :
+                `${path}?${field}:value,${keyDual(field)}:label`
+              Filters.push({
+                title: field,
+                field: field,
+                operator: op,
+                value: value,
+                url: url,
+                label: null
+              })
+            }
+          })
+          return url
+        })
+        .reduce((X, url) => {
+          if (url != null && X.indexOf(url) == -1) {
+            X.push(url)
+          }
+          return X
+        }, [])
+        .map(url => get(url).then(data => [url, data])))
+      )
+      .then(filters => {
+        filters.forEach(([url, data]) => {
+          Filter.forEach(F => {
+            if (F.url == url) {
+              data.forEach(({value, label}) => {
+                if (F.label == null && F.value == value) {
+                  F.label = label
+                } 
+              })
+            }
+          })
+        })
 
         return get(`response/${url}`)
       })
@@ -355,46 +380,26 @@ export default ({
             }])
         }
 
-        const target = resolveHref({
+        return get(resolveHref({
           _group: '',
           _skip: null,
           _limit: null,
           _sort: null
-        }, url)
-        if (urlCmp(cache.aggregate.url, target)) {
-          return cache.aggregate.data
-        } else {
-          cache.aggregate.url = target
-          cache.aggregate.data = false
-          return get(target)
-        }
+        }, url))
       })
       .then(row => {
         if (row && row[0]) {
-          if (cache.aggregate.data === false) {
-            cache.aggregate.data = row
-          }
           schema.items.default = row[0]
 
-          const target = resolveHref({
+          return get(resolveHref({
             _keys: '*',
             _skip: null,
             _limit: null,
             _sort: null
-          }, url)
-          if (urlCmp(cache.count.url, target)) {
-            return cache.count.data
-          } else {
-            cache.count.url = target
-            cache.count.data = false
-            return get(target)
-          }
+          }, url))
         }
       })
       .then(n => {
-        if (cache.count.data === false) {
-          cache.count.data = n
-        }
         const skip = parseInt(Q._skip) || 0
         const limit = parseInt(Q._limit) || 0
 

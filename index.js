@@ -59,6 +59,7 @@ const start = ({
   }
 
   const getUrl = () => location.hash.substr(1)
+  const getPath = () => getUrl().split('?')[0]
   var update = () => {}
   const navbar = (cnf) => {
     if (config.navbar || cnf) {
@@ -77,10 +78,25 @@ const start = ({
     icon: config.BACK_ICON
   }
 
+  const Cache = {}
+  const getter = url => {
+    const k = decodeURIComponent(url)
+
+    if (Cache[k] !== undefined) {
+      console.log('cache: '+k)
+      return Promise.resolve(Cache[k])
+    } else {
+      return get(url).then(data => {
+        Cache[k] = data
+        return data
+      })
+    }
+  }
+
   const Deps = {
     config: config,
     wrap: wrap,
-    get: get,
+    get: getter,
     post: post(navbar),
     back: back,
     html: html,
@@ -94,13 +110,20 @@ const start = ({
         attrs.options.language = config.LANGUAGE
       }
       if (attrs.options.loader == null) {
-        attrs.options.loader = get
+        attrs.options.loader = getter
       }
       return jsb(attrs)
     }
   }
 
+  var path = getPath()
   window.addEventListener('hashchange', () => {
+    if (path != getPath()) {
+      Object.keys(Cache).forEach(k => {
+        delete Cache[k]
+      })
+      path = getPath()
+    }
     update(getUrl())
   })
 
