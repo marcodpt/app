@@ -263,42 +263,46 @@ export default ({
     }
 
     const Filters = []
+    var Ops = null
 
-    return get('api/operators?_keys=id,name,title,booleans_id_strict:strict')
-      .then(operators => Promise.all((Q._filter || [])
-        .filter(x => x.indexOf('_~ct~') != 0)
-        .map(x => {
-          var url = null
-          operators.forEach(op => {
-            if (url == null && x.indexOf(op.name) > 0) {
-              const X = x.split(op.name)
-              const field = X.shift()
-              const value = X.join(op.name)
-              url = op.strict == 0 || field != keyBase(field) ? null :
-                `${path}?${field}:value,${keyDual(field)}:label`
-              Filters.push({
-                title: field,
-                field: field,
-                operator: op,
-                value: value,
-                url: url,
-                label: null
-              })
-            }
+    return get('api/operators')
+      .then(operators => {
+        Ops = operators
+        return Promise.all((Q._filter || [])
+          .filter(x => x.indexOf('_~ct~') != 0)
+          .map(x => {
+            var url = null
+            operators.forEach(op => {
+              if (url == null && x.indexOf(op.name) > 0) {
+                const X = x.split(op.name)
+                const field = X.shift()
+                const value = X.join(op.name)
+                url = op.booleans_id_strict == 0 || field != keyBase(field) ?
+                  null : `${path}?${field}:value,${keyDual(field)}:label`
+                Filters.push({
+                  title: field,
+                  field: field,
+                  op: op,
+                  value: value,
+                  url: url,
+                  label: null,
+                  base: x
+                })
+              }
+            })
+            return url
           })
-          return url
-        })
-        .reduce((X, url) => {
-          if (url != null && X.indexOf(url) == -1) {
-            X.push(url)
-          }
-          return X
-        }, [])
-        .map(url => get(url).then(data => [url, data])))
-      )
+          .reduce((X, url) => {
+            if (url != null && X.indexOf(url) == -1) {
+              X.push(url)
+            }
+            return X
+          }, [])
+          .map(url => get(url).then(data => [url, data])))
+      })
       .then(filters => {
         filters.forEach(([url, data]) => {
-          Filter.forEach(F => {
+          Filters.forEach(F => {
             if (F.url == url) {
               data.forEach(({value, label}) => {
                 if (F.label == null && F.value == value) {
@@ -317,6 +321,13 @@ export default ({
           throw 'ERROR_FORBIDDEN'
         }
         schema.items = updateSchema(config, schema.items, true, Q)
+        const P = schema.items.properties
+        Filters.forEach(f => {
+          const Q = P[keyBase(f.field)] || P[keyDual(f.field)]
+          if (Q && Q.title) {
+            f.title = Q.title
+          }
+        })
         if (schema.links) {
           schema.links = [back]
             .concat(schema.links.map(l => mapLink(l)))
@@ -342,7 +353,42 @@ export default ({
               rel: 'search',
               title: config.FILTER_LABEL,
               ui: config.FILTER_UI,
-              icon: config.FILTER_ICON
+              icon: config.FILTER_ICON,
+              href: "javascript:addFilter('{field}{operator}{value}')",
+              hrefSchema: {
+                properties: {
+                  field: {
+                    title: 'Campo',
+                    enum: Object.keys(P).map(key => keyBase(key)),
+                    labels: Object.keys(P).map(key => {
+                      const Q = P[key]
+                      return Q.title == null ? key : Q.title
+                    })
+                  },
+                  operator: {
+                    title: 'Operador',
+                    enum: Ops.map(op => op.name),
+                    labels: Ops.map(op => op.title),
+                    default: '~eq~'
+                  },
+                  value: {
+                    title: 'Valor',
+                    href: `${
+                      path
+                    }?_keys={field}:value,{field}_:label***{operator}`
+                  }
+                },
+                required: ['field', 'operator', 'value']
+              },
+              links: Filters.map(f => ({
+                rel: 'self',
+                ui: config.CLEAR_UI,
+                icon: config.CLEAR_ICON,
+                title: `${f.title} ${f.op.title} ${
+                  f.label == null ? f.value : f.label
+                }`,
+                href: `javascript:removeFilter('${f.base}')`
+              }))
             }])
             .concat([{
               rel: 'search',
@@ -357,10 +403,10 @@ export default ({
                 default: [],
                 minItems: 1,
                 items: {
-                  enum: Object.keys(schema.items.properties),
-                  labels: Object.keys(schema.items.properties).map(key => {
-                    const P = schema.items.properties[key]
-                    return P.title == null ? key : P.title
+                  enum: Object.keys(P),
+                  labels: Object.keys(P).map(key => {
+                    const Q = P[key]
+                    return Q.title == null ? key : Q.title
                   })
                 }
               }

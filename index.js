@@ -80,6 +80,17 @@ const start = ({
 
   const Cache = {}
   const getter = url => {
+    const U = url.split('***')
+    const O = Cache['api/operators']
+    if (U.length == 2) {
+      if (O && O.reduce(
+        (x, o) => x || (U[1] == o.name && o.booleans_id_strict == 1)
+      , false)) {
+        url = U[0]
+      } else {
+        return true
+      }
+    }
     const k = decodeURIComponent(url)
 
     if (Cache[k] !== undefined) {
