@@ -121,7 +121,10 @@ start({
         'maxlength',
         'minimum',
         'maximum'
-      ]
+      ],
+      href: {
+        tables_id: 'api/get/tables?_keys=id:value,title:label'
+      }
     },
     properties: {
       ignore: [

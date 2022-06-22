@@ -45,7 +45,7 @@ const keyDual = key => key.substr(-1) != '_' ? key+'_' : key
 
 const keyEq = (a, b) => keyBase(a) == keyBase(b)
 
-const updateSchema = (config, schema, readOnly, X, Ignore) => {
+const updateSchema = (config, schema, readOnly, X, Ignore, Href) => {
   if (!schema) {
     return
   }
@@ -64,6 +64,7 @@ const updateSchema = (config, schema, readOnly, X, Ignore) => {
   
   if (required && properties) {
     Ignore = Ignore || []
+    Href = Href || {}
     R.properties = required.filter(key =>
       (!readOnly || key == 'id' || (key.substr(-1) == '_' && key != 'id_')) &&
       Ignore.indexOf(keyBase(key)) == -1
@@ -71,7 +72,8 @@ const updateSchema = (config, schema, readOnly, X, Ignore) => {
       const Q = properties[key]
       P[key] = {
         ...Q,
-        href: Q.href && readOnly ? `#/${Q.href}` : Q.href,
+        href: Q.href && readOnly ? `#/${Q.href}` :
+          Href[key] != null ? Href[key] : Q.href,
       }
       if (P[key].readOnly && !readOnly) {
         delete P[key].readOnly
@@ -150,6 +152,13 @@ export default ({
   const Q = query(q)
   const url = path+(q ? `?${q}` : '')
 
+  const Route = (config.ROUTES || {})[table] || {}
+  const Links = Route.links || []
+  const Globals = Links.filter(l => l.href.indexOf('{') == -1)
+  const Locals = Links.filter(l => l.href.indexOf('{') != -1)
+  const Ignore = (Route.ignore || []).map(key => keyBase(key))
+  const Href = (Route.href || {})
+
   if (service != 'get') {
     var res = null
     return get(`response/${url}`).then(response => {
@@ -166,7 +175,7 @@ export default ({
 
       return wrap(jsb({
         schema: {
-          ...updateSchema(config, schema, false, Q),
+          ...updateSchema(config, schema, false, Q, [], Href),
           links: [back],
           ui: url ? schema.ui : 'card',
           format: url ? schema.format : 'danger'
@@ -246,12 +255,6 @@ export default ({
     })
   } else {
     var schema = null
-
-    const Route = (config.ROUTES || {})[table] || {}
-    const Links = Route.links || []
-    const Globals = Links.filter(l => l.href.indexOf('{') == -1)
-    const Locals = Links.filter(l => l.href.indexOf('{') != -1)
-    const Ignore = (Route.ignore || []).map(key => keyBase(key))
 
     const fix = Object.keys(config.QUERY || {}).reduce((X, key) => {
       if (Q[key] == null) {
