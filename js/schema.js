@@ -64,7 +64,10 @@ const updateSchema = (config, schema, readOnly, X) => {
       const Q = properties[key]
       P[key] = {
         ...Q,
-        href: Q.href && readOnly ? `#/${Q.href}` : Q.href
+        href: Q.href && readOnly ? `#/${Q.href}` : Q.href,
+      }
+      if (P[key].readOnly && !readOnly) {
+        delete P[key].readOnly
       }
       if (X != null) {
         const b = keyBase(key)
@@ -138,10 +141,10 @@ export default ({
 
   if (service != 'get') {
     var res = null
-    return get(`response/${path}`).then(response => {
+    return get(`response/${url}`).then(response => {
       res = response
 
-      return get(`request/${path}`)
+      return get(`request/${url}`)
     }).then(schema => {
       if (!schema) {
         throw 'ERROR_FORBIDDEN'
