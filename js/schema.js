@@ -76,6 +76,10 @@ const updateSchema = (config, schema, readOnly, X, Ignore) => {
       if (P[key].readOnly && !readOnly) {
         delete P[key].readOnly
       }
+      if (!readOnly && P[key].ui == 'file') {
+        P[key].type = ["object", "null"]
+        P[key].default = null
+      }
       if (X != null) {
         const b = keyBase(key)
         const d = keyDual(key)
@@ -159,10 +163,6 @@ export default ({
 
       const L = (schema.links || [])[0]
       const url = (L || {}).href
-      var block = true
-      setTimeout(() => {
-        block = false
-      }, 500)
 
       return wrap(jsb({
         schema: {
@@ -173,8 +173,34 @@ export default ({
         },
         options: {
           showValid: true,
-          resolve: !url ? null : (data, e) => block ? '' :
-            post(url, data).then(() => {
+          resolve: !url ? null : (data, e) => {
+            const Files = {}
+            Object.keys(data).forEach(key => {
+              if (
+                key.substr(0, 8) == 'files_id' &&
+                data[key] != null && typeof data[key] == 'object'
+              ) {
+                Files[key] = data[key]
+                data[key] = 0
+                const N = Files[key].name.split(".")
+                N[0] += '_'+Math.random().toString(36).substr(2, 9)
+                Files[key].name = N.join(".")
+              }
+            })
+
+            return post(url, data).then(rowid => {
+              return Promise.all(Object.keys(Files).map(key => 
+                post('api/files', Files[key])
+                  .then(fid => {
+                    const F = {}
+                    F[key] = fid
+                    return post(`api/put/${table}/${rowid}`, F)
+                  })
+              )).catch(err => {
+                console.log('UPLOAD ERROR!')
+                console.log(err)
+              })
+            }).then(() => {
               const isLogin = /^(login|logout|switch)$/.test(service)
               if (res && res.description) {
                 e.replaceWith(wrap(jsb({
@@ -194,6 +220,7 @@ export default ({
                 window.location.href = '#'
               }
             })
+          } 
         }
       }))
     })
