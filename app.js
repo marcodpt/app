@@ -91,5 +91,47 @@ start({
   QUERY: {
     _limit: 10,
     _skip: 0
+  },
+  ROUTES: {
+    tables: {
+      links: [
+        {
+          rel: 'self',
+          href: '#/api/post/{name}/0',
+          icon: 'fas fa-plus',
+          ui: 'btn btn-secondary'
+        }
+      ]
+    },
+    triggers: {
+      ignore: ['sql']
+    },
+    columns: {
+      ignore: [
+        'created',
+        'users_id',
+        'count_columns',
+        'columns_id',
+        'description',
+        'label',
+        'rule',
+        'dflt',
+        'pattern',
+        'minlength',
+        'maxlength',
+        'minimum',
+        'maximum'
+      ]
+    },
+    properties: {
+      ignore: [
+        'description',
+        'pattern',
+        'minlength',
+        'maxlength',
+        'minimum',
+        'maximum'
+      ]
+    }
   }
 })

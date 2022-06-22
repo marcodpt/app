@@ -7,13 +7,18 @@ const mapLink = ({
   ui,
   title,
   href,
+  icon,
   ...link
 }, sm) => ({
   ...link,
-  href: href ? `#/${href}` : href,
+  href: href &&
+    href.indexOf('#') < 0 &&
+    href.substr(0, 7) != 'http://' &&
+    href.substr(0, 8) != 'https://' ?
+      `#/${href}` : href,
   title: sm ? '' : title,
-  ui: getBtn(ui)+(sm ? ' btn-sm' : ''),
-  icon: getIcon(ui)
+  ui: (icon == null ? getBtn(ui) : ui)+(sm ? ' btn-sm' : ''),
+  icon: icon == null ? getIcon(ui) : icon
 }) 
 
 const urlCmp = (a, b) => decodeURIComponent(a) == decodeURIComponent(b)
@@ -40,7 +45,7 @@ const keyDual = key => key.substr(-1) != '_' ? key+'_' : key
 
 const keyEq = (a, b) => keyBase(a) == keyBase(b)
 
-const updateSchema = (config, schema, readOnly, X) => {
+const updateSchema = (config, schema, readOnly, X, Ignore) => {
   if (!schema) {
     return
   }
@@ -58,8 +63,10 @@ const updateSchema = (config, schema, readOnly, X) => {
   }
   
   if (required && properties) {
+    Ignore = Ignore || []
     R.properties = required.filter(key =>
-      !readOnly || key == 'id' || (key.substr(-1) == '_' && key != 'id_')
+      (!readOnly || key == 'id' || (key.substr(-1) == '_' && key != 'id_')) &&
+      Ignore.indexOf(keyBase(key)) == -1
     ).reduce((P, key) => {
       const Q = properties[key]
       P[key] = {
@@ -213,6 +220,12 @@ export default ({
   } else {
     var schema = null
 
+    const Route = (config.ROUTES || {})[table] || {}
+    const Links = Route.links || []
+    const Globals = Links.filter(l => l.href.indexOf('{') == -1)
+    const Locals = Links.filter(l => l.href.indexOf('{') != -1)
+    const Ignore = (Route.ignore || []).map(key => keyBase(key))
+
     const fix = Object.keys(config.QUERY || {}).reduce((X, key) => {
       if (Q[key] == null) {
         X[key] = config.QUERY[key]
@@ -301,7 +314,10 @@ export default ({
         if (!schema || !schema.items) {
           throw 'ERROR_FORBIDDEN'
         }
-        schema.items = updateSchema(config, schema.items, true, Q)
+        schema.items = updateSchema(config, {
+          ...schema.items,
+          links: (schema.items.links || []).concat(Locals)
+        }, true, Q, Ignore)
         const P = schema.items.properties
         Filters.forEach(f => {
           const Q = P[keyBase(f.field)] || P[keyDual(f.field)]
@@ -311,7 +327,7 @@ export default ({
         })
         if (schema.links) {
           schema.links = [back]
-            .concat(schema.links.map(l => mapLink(l)))
+            .concat(schema.links.concat(Globals).map(l => mapLink(l)))
             .concat([{
               rel: 'search',
               href: resolveHref({
