@@ -92,13 +92,13 @@ const start = ({
       }
     }
     const k = decodeURIComponent(url)
+    const copy = X => JSON.parse(JSON.stringify(X))
 
     if (Cache[k] !== undefined) {
-      console.log('cache: '+k)
-      return Promise.resolve(Cache[k])
+      return Promise.resolve(copy(Cache[k]))
     } else {
       return get(url).then(data => {
-        Cache[k] = data
+        Cache[k] = copy(data)
         return data
       })
     }

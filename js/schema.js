@@ -29,14 +29,8 @@ const resolveHref = (X, uri) => {
 
   const url = path+(q ? `?${q}` : '')
 
-  if (uri === true) {
-    if (!urlCmp(href, url)) {
-      location.replace(url)
-    }
-  } else {
-    return uri != null ? url :
-      urlCmp(url, href) ? '' : `javascript:location.replace('${url}')`
-  }
+  return uri != null ? url :
+    urlCmp(url, href) ? '' : `javascript:location.replace('${url}')`
 }
 
 const keyBase = key => key.substr(-1) == '_' ?
@@ -122,40 +116,6 @@ const getF = () => {
   const path = H.shift()
   const Q = query(H.join('?'))
   return Q._filter instanceof Array ? Q._filter : []
-}
-
-window.addFilter = f => {
-  const F = getF()
-  if (F.indexOf(f) < 0) {
-    F.push(f)
-    resolveHref({
-      _filter: F
-    }, true)
-  }
-}
-
-window.removeFilter = f => {
-  const F = getF()
-  const i = F.indexOf(f)
-  if (i >= 0) {
-    F.splice(i, 1)
-    resolveHref({
-      _filter: F
-    }, true)
-  }
-}
-
-window.setSearch = s => {
-  const F = getF()
-    .filter(x => x.indexOf('_~ct~') != 0)
-
-  if (s) {
-    F.push(`_~ct~${s}`)
-  }
-
-  resolveHref({
-    _filter: F
-  }, true)
 }
 
 export default ({
@@ -262,6 +222,24 @@ export default ({
       return null
     }
 
+    if (Q._filter instanceof Array) {
+      const F = Q._filter.filter(f => f != '_~ct~').reduce((F, f) => {
+        if (F.indexOf(f) == -1) {
+          F.push(f)
+        }
+        return F
+      }, [])
+
+      const target = `#/${resolveHref({
+        _filter: F
+      }, url)}`
+
+      if (!urlCmp(target, window.location.hash)) {
+        location.replace(target)
+        return null
+      }
+    }
+
     const Filters = []
     var Ops = null
 
@@ -333,13 +311,19 @@ export default ({
             .concat(schema.links.map(l => mapLink(l)))
             .concat([{
               rel: 'search',
-              href: "javascript:setSearch('')",
+              href: resolveHref({
+                _filter: (Q._filter || []).filter(x => x.indexOf('_~ct~') != 0) 
+              }),
               ui: config.BACK_UI,
               icon: config.CLEAR_ICON
             }])
             .concat([{
               rel: 'search',
-              href: "javascript:setSearch('{}')",
+              href: resolveHref({
+                _filter: (Q._filter || [])
+                  .filter(x => x.indexOf('_~ct~') != 0) 
+                  .concat('_~ct~__search__')
+              }).replace('__search__', '{}'),
               hrefSchema: {
                 title: 'search',
                 description: config.SEARCH_LABEL,
@@ -354,7 +338,12 @@ export default ({
               title: config.FILTER_LABEL,
               ui: config.FILTER_UI,
               icon: config.FILTER_ICON,
-              href: "javascript:addFilter('{field}{operator}{value}')",
+              href: resolveHref({
+                _filter: (Q._filter || []).concat('__field____op____value__')
+              })
+                .replace('__field__', '{field}')
+                .replace('__op__', '{operator}')
+                .replace('__value__', '{value}'),
               hrefSchema: {
                 properties: {
                   field: {
@@ -387,7 +376,9 @@ export default ({
                 title: `${f.title} ${f.op.title} ${
                   f.label == null ? f.value : f.label
                 }`,
-                href: `javascript:removeFilter('${f.base}')`
+                href: resolveHref({
+                  _filter: (Q._filter || []).filter(x => x != f.base)
+                })
               }))
             }])
             .concat([{
@@ -462,6 +453,12 @@ export default ({
           const page = setPage(1 + Math.floor(skip / limit))
           const setSkip = page => String((page - 1) * limit)
           const A = Array.from(Array(pages).keys()).map(x => parseInt(x) + 1)
+
+          if (setSkip(page) != String(skip)) {
+            location.replace(resolveHref({
+              _skip: setSkip(page)
+            }), window.location.hash)
+          }
 
           schema.links = schema.links.concat([
             {
