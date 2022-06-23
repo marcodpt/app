@@ -18,6 +18,7 @@ export default {
     'Falha ao conectar ao servidor!',
     'Verifique se sua conexão com a internet está ativa!'
   ],
+  ERROR_BATCH: 'Nenhum item selecionado!',
   BACK_LABEL: 'Voltar',
   SUBMIT_LABEL: 'Enviar',
   PAGINATION_LABEL: (page, pages) => `Página ${page} de ${pages}`,

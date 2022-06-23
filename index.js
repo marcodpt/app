@@ -3,6 +3,7 @@ import {wrap, post, get} from './js/lib.js'
 import cnf from './js/config.js'
 import lang from './lang/index.js'
 import schema from './js/schema.js'
+import batch from './js/batch.js'
 import grapher from './js/graph.js'
 import upload from './js/upload.js'
 import viewer from './js/viewer.js'
@@ -18,6 +19,9 @@ var config = {
     }, {
       path: '/api/:service/:table/:id',
       view: schema
+    }, {
+      path: '/batch/:service/:table/:ids',
+      view: batch
     }, {
       path: '/graph/:id',
       view: grapher
@@ -151,11 +155,14 @@ const start = ({
       ]).map(R => ({
         path: R.path,
         view: (params, extra) =>
-          Promise.resolve(R.view(params, {
+          Promise.resolve().then(() => R.view(params, {
             ...Deps,
             ...extra
           })).catch(err => {
-            var msg = config.ERROR_INTERNAL_SERVER_ERROR
+            var msg = err && typeof err == "object" ?
+              config.ERROR_CONNECTION :
+              config.ERROR_INTERNAL_SERVER_ERROR
+
             if (
               typeof err == "string" &&
               err.substr(0, 6) == "ERROR_" &&
@@ -175,8 +182,9 @@ const start = ({
                 format: 'danger',
                 links: [{
                   ...back,
-                  href: err == 'ERROR_UNAUTHORIZED' ?
-                    '#/api/login/users' : back.href
+                  href: err != 'ERROR_UNAUTHORIZED' ? back.href :
+                    window.location.hash == '#/api/login/users' ?
+                      'javascript:location.reload()' : '#/api/login/users'
                 }]
               }
             }))

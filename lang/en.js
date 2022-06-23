@@ -18,6 +18,7 @@ export default {
     'Failed to connect to server!',
     'Make sure your internet connection is active!'
   ],
+  ERROR_BATCH: 'No items selected!',
   BACK_LABEL: 'Back',
   SUBMIT_LABEL: 'Submit',
   PAGINATION_LABEL: (page, pages) => `Page ${page} of ${pages}`,

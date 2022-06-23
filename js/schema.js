@@ -139,6 +139,17 @@ const Cache = {
   Ids: []
 }
 
+const clearCache = () => {
+  Cache.path = null
+  Cache.Ids = []
+}
+
+window.batch = url => {
+  url = url+Cache.Ids.join(',')
+  clearCache()
+  window.location.href = url
+}
+
 export default ({
   service,
   table,
@@ -163,10 +174,6 @@ export default ({
   const Locals = Links.filter(l => l.href.indexOf('{') != -1)
   const Ignore = (Route.ignore || []).map(key => keyBase(key))
   const Href = (Route.href || {})
-  const clearCache = () => {
-    Cache.path = null
-    Cache.Ids = []
-  }
 
   if (service != 'get') {
     clearCache()
@@ -361,6 +368,7 @@ export default ({
         return get(`response/${url}`)
       })
       .then(res => {
+        const Batch = Object.keys(config.BATCH || {})
         schema = res
         if (!schema || !schema.items) {
           throw 'ERROR_FORBIDDEN'
@@ -368,6 +376,19 @@ export default ({
         schema.items = updateSchema(config, {
           ...schema.items,
           links: (schema.items.links || [])
+            .map(l => {
+              if (l.href.substr(0, 4) == 'api/') {
+                const L = l.href.split('/')
+                if (L.length == 4 && Batch.indexOf(L[1]) != -1) {
+                  l.links = [{
+                    rel: 'self',
+                    href: `javascript:batch('#/batch/${L[1]}/${L[2]}/')`
+                  }]
+                }
+              }
+
+              return l
+            })
             .concat(Q._group != null ? [] : Locals)
         }, true, Q, Ignore)
         const P = schema.items.properties

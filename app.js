@@ -136,5 +136,28 @@ start({
         'maximum'
       ]
     }
+  },
+  BATCH: {
+    delete: {
+      title: 'Excluir em lote',
+      params: {},
+      request: count => {
+        const s = count > 1 ? 's' : ''
+        return `${count} item${s} selecionado${s}`
+      },
+      response: (success, error) => {
+        const plural = x => x > 1 ? 's' : ''
+        const s = plural(success)
+        const e = plural(error)
+        return [
+          !error ? '' : error > 1 ?
+            `Ocorreram ${error} erros!` :
+            `Ocorreu 1 erro!`,
+          !success ? '' : success > 1 ?
+            `${success} exclusões realizadas com sucesso!` :
+            `1 exclusão realizada com sucesso!`
+        ].filter(x => x).join('\n')
+      }
+    }
   }
 })
