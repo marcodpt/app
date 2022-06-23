@@ -182,9 +182,9 @@ const start = ({
                 format: 'danger',
                 links: [{
                   ...back,
-                  href: err != 'ERROR_UNAUTHORIZED' ? back.href :
-                    window.location.hash == '#/api/login/users' ?
-                      'javascript:location.reload()' : '#/api/login/users'
+                  href: err == 'ERROR_UNAUTHORIZED' ? '#/api/login/users'+(
+                    window.location.hash == '#/api/login/users' ? '?' : ''
+                  ) : back.href
                 }]
               }
             }))

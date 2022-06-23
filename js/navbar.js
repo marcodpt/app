@@ -24,7 +24,15 @@ const resolveItems = (item, links, user) => {
         } else {
           return resolveItems(item, links, user)
         }
-      }).filter(item => item != null)
+      }).filter(item => item != null).map(item => {
+        if (item &&
+          item.href == window.location.hash &&
+          item.href.indexOf('?') == -1
+        ) {
+          item.href += '?'
+        }
+        return item
+      })
     }
   } else {
     return item
