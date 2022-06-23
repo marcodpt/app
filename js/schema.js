@@ -134,6 +134,11 @@ const getF = () => {
   return Q._filter instanceof Array ? Q._filter : []
 }
 
+const Cache = {
+  path: null,
+  Ids: []
+}
+
 export default ({
   service,
   table,
@@ -158,8 +163,13 @@ export default ({
   const Locals = Links.filter(l => l.href.indexOf('{') != -1)
   const Ignore = (Route.ignore || []).map(key => keyBase(key))
   const Href = (Route.href || {})
+  const clearCache = () => {
+    Cache.path = null
+    Cache.Ids = []
+  }
 
   if (service != 'get') {
+    clearCache()
     var res = null
     return get(`response/${url}`).then(response => {
       res = response
@@ -234,6 +244,7 @@ export default ({
       }))
     })
   } else if (id != null) {
+    clearCache()
     var schema = null
     return get(`response/${path}`).then(res => {
       if (!res) {
@@ -254,6 +265,16 @@ export default ({
       return wrap(jsb({schema: schema}))
     })
   } else {
+    const p = path+'?'+query(Object.keys(Q).reduce((P, key) => {
+      if (key.substr(0, 1) != '_') {
+        P[key] = Q[key]
+      }
+      return P
+    }, {}))
+    if (p != Cache.path) {
+      clearCache()
+      Cache.path = p
+    }
     var schema = null
 
     const fix = Object.keys(config.QUERY || {}).reduce((X, key) => {
@@ -346,7 +367,8 @@ export default ({
         }
         schema.items = updateSchema(config, {
           ...schema.items,
-          links: (schema.items.links || []).concat(Locals)
+          links: (schema.items.links || [])
+            .concat(Q._group != null ? [] : Locals)
         }, true, Q, Ignore)
         const P = schema.items.properties
         Filters.forEach(f => {
@@ -467,23 +489,11 @@ export default ({
         }
 
         return get(resolveHref({
-          _group: '',
+          _keys: '*',
           _skip: null,
           _limit: null,
           _sort: null
         }, url))
-      })
-      .then(row => {
-        if (row && row[0]) {
-          schema.items.default = row[0]
-
-          return get(resolveHref({
-            _keys: '*',
-            _skip: null,
-            _limit: null,
-            _sort: null
-          }, url))
-        }
       })
       .then(n => {
         const skip = parseInt(Q._skip) || 0
@@ -503,7 +513,7 @@ export default ({
           const setSkip = page => String((page - 1) * limit)
           const A = Array.from(Array(pages).keys()).map(x => parseInt(x) + 1)
 
-          if (setSkip(page) != String(skip)) {
+          if (setSkip(page) != Q._skip) {
             location.replace(resolveHref({
               _skip: setSkip(page)
             }), window.location.hash)
@@ -554,9 +564,40 @@ export default ({
         return get(url)
       })
       .then(data => {
-        schema.default = data
+        schema.default = data.map(row => {
+          row.checked = Cache.Ids.indexOf(row.id) >= 0
+          return row
+        })
         const e = jsb({
-          schema: schema
+          schema: schema,
+          options: {
+            watch: Q._group != null ? null : row => {
+              if (row) {
+                const i = Cache.Ids.indexOf(row.id)
+                if (i < 0) {
+                  Cache.Ids.push(row.id)
+                } else {
+                  Cache.Ids.splice(i, 1)
+                }
+              } else {
+                return get(resolveHref({
+                  _group: '',
+                  _skip: null,
+                  _limit: null,
+                  _sort: null,
+                  _filter: (Q._filter || [])
+                    .concat(Cache.Ids.length ? [
+                      'id~eq~'+Cache.Ids.join(',')
+                    ] : [])
+                }, url)).then(rows => {
+                  const data = rows && rows[0] && typeof rows[0] == 'object' ?
+                    rows[0] : {}
+                  data.checked = Cache.Ids.length
+                  return data
+                })
+              }
+            }
+          }
         })
 
         const s = e.querySelector('[name=search]')
