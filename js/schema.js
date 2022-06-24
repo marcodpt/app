@@ -174,6 +174,10 @@ export default ({
   const Locals = Links.filter(l => l.href.indexOf('{') != -1)
   const Ignore = (Route.ignore || []).map(key => keyBase(key))
   const Href = (Route.href || {})
+  const Hide = (Route.hide || [])
+  const isHidden = link => Hide.reduce(
+    (pass, test) => pass && link.href.indexOf(test) < 0
+  , true)
 
   if (service != 'get') {
     clearCache()
@@ -289,7 +293,10 @@ export default ({
         default: data
       }
       schema = updateSchema(config, schema, true)
-      schema.links = [back].concat(schema.links || [])
+      schema.links = [back]
+        .concat(schema.links || [])
+        .concat(Locals)
+        .filter(isHidden)
       return wrap(jsb({schema: schema}))
     })
   } else {
@@ -410,6 +417,7 @@ export default ({
 
               return l
             })
+            .filter(isHidden)
             .concat(Q._group != null ? [] : Locals)
         }, true, Q, Ignore)
         const P = schema.items.properties
@@ -421,7 +429,10 @@ export default ({
         })
         if (schema.links) {
           schema.links = [back]
-            .concat(schema.links.concat(Globals).map(l => mapLink(l)))
+            .concat(schema.links.concat(Globals)
+              .map(l => mapLink(l))
+              .filter(isHidden)
+            )
             .concat([{
               rel: 'search',
               href: resolveHref({

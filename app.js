@@ -1,6 +1,6 @@
 import {
   navbar, route, start
-} from 'https://cdn.jsdelivr.net/gh/marcodpt/app@0.1.2/index.js'
+} from 'https://cdn.jsdelivr.net/gh/marcodpt/app@0.1.3/index.js'
 
 navbar({
   type: 'dark',
@@ -99,9 +99,11 @@ start({
           rel: 'self',
           href: '#/api/post/{name}/0',
           icon: 'fas fa-plus',
-          ui: 'btn btn-secondary'
+          ui: 'btn btn-secondary',
+          title: 'Default'
         }
-      ]
+      ],
+      hide: []
     },
     triggers: {
       ignore: ['sql']
@@ -123,7 +125,7 @@ start({
         'maximum'
       ],
       href: {
-        tables_id: 'api/get/tables?_keys=id:value,title:label'
+        ui: '@interfaces'
       }
     },
     properties: {
@@ -134,7 +136,10 @@ start({
         'maxlength',
         'minimum',
         'maximum'
-      ]
+      ],
+      href: {
+        ui: '@interfaces'
+      }
     }
   },
   BATCH: {

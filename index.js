@@ -1,4 +1,6 @@
-import {jsb, graph, query, spa, html, chart} from './js/dependencies.js'
+import {
+  jsb, graph, query, spa, html, chart, interfaces
+} from './js/dependencies.js'
 import {wrap, post, get} from './js/lib.js'
 import cnf from './js/config.js'
 import lang from './lang/index.js'
@@ -82,7 +84,9 @@ const start = ({
     icon: config.BACK_ICON
   }
 
-  const Cache = {}
+  const Cache = {
+    '@interfaces': interfaces
+  }
   const getter = url => {
     const U = url.split('***')
     const O = Cache['api/operators']
@@ -135,7 +139,9 @@ const start = ({
   window.addEventListener('hashchange', () => {
     if (path != getPath()) {
       Object.keys(Cache).forEach(k => {
-        delete Cache[k]
+        if (k.substr(0, 1) != '@') {
+          delete Cache[k]
+        }
       })
       path = getPath()
     }
