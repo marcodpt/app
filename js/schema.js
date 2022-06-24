@@ -190,65 +190,86 @@ export default ({
       const L = (schema.links || [])[0]
       const url = (L || {}).href
 
-      return wrap(jsb({
-        schema: {
-          ...updateSchema(config, schema, false, Q, [], Href),
-          links: [back],
-          ui: url ? schema.ui : 'card',
-          format: url ? schema.format : 'danger'
-        },
-        options: {
-          showValid: true,
-          resolve: !url ? null : (data, e) => {
-            const Files = {}
-            Object.keys(data).forEach(key => {
-              if (
-                key.substr(0, 8) == 'files_id' &&
-                data[key] != null && typeof data[key] == 'object'
-              ) {
-                Files[key] = data[key]
-                data[key] = 0
-                const N = Files[key].name.split(".")
-                N[0] += '_'+Math.random().toString(36).substr(2, 9)
-                Files[key].name = N.join(".")
-              }
-            })
+      const submit = !url ? null : (data, e) => {
+        const Files = {}
+        Object.keys(data).forEach(key => {
+          if (
+            key.substr(0, 8) == 'files_id' &&
+            data[key] != null && typeof data[key] == 'object'
+          ) {
+            Files[key] = data[key]
+            data[key] = 0
+            const N = Files[key].name.split(".")
+            N[0] += '_'+Math.random().toString(36).substr(2, 9)
+            Files[key].name = N.join(".")
+          }
+        })
 
-            return post(url, data).then(rowid => {
-              return Promise.all(Object.keys(Files).map(key => 
-                post('api/files', Files[key])
-                  .then(fid => {
-                    const F = {}
-                    F[key] = fid
-                    return post(`api/put/${table}/${rowid}`, F)
-                  })
-              )).catch(err => {
-                console.log('UPLOAD ERROR!')
-                console.log(err)
+        return post(url, data).then(rowid => {
+          return Promise.all(Object.keys(Files).map(key => 
+            post('api/files', Files[key])
+              .then(fid => {
+                const F = {}
+                F[key] = fid
+                return post(`api/put/${table}/${rowid}`, F)
               })
-            }).then(() => {
-              const isLogin = /^(login|logout|switch)$/.test(service)
-              if (res && res.description) {
-                e.replaceWith(wrap(jsb({
-                  schema: {
-                    ...res,
-                    ui: 'card',
-                    format: 'success',
-                    links: [{
-                      ...back,
-                      href: isLogin ? '#' : back.href
-                    }]
-                  }
-                })))
-              } else if (!isLogin) {
-                history.back()
-              } else {
-                window.location.href = '#'
+          )).catch(err => {
+            console.log('UPLOAD ERROR!')
+            console.log(err)
+          })
+        }).then(() => {
+          const isLogin = /^(login|logout|switch)$/.test(service)
+          if (res && res.description) {
+            const x = wrap(jsb({
+              schema: {
+                ...res,
+                ui: 'card',
+                format: 'success',
+                links: [{
+                  ...back,
+                  href: isLogin ? '#' : back.href
+                }]
               }
-            })
-          } 
-        }
-      }))
+            }))
+            if (e) {
+              e.replaceWith(x)
+            } else {
+              return x
+            }
+          } else if (!isLogin) {
+            history.back()
+          } else {
+            window.location.href = '#'
+          }
+        })
+      }
+
+      schema = {
+        ...updateSchema(config, schema, false, Q, [], Href),
+        links: [back],
+        ui: url ? schema.ui : 'card',
+        format: url ? schema.format : 'danger'
+      }
+
+      if (
+        !schema.description && submit &&
+        Object.keys(schema.properties || {}).length == 0
+      ) {
+        return submit({})
+      } else {
+        return wrap(jsb({
+          schema: {
+            ...updateSchema(config, schema, false, Q, [], Href),
+            links: [back],
+            ui: url ? schema.ui : 'card',
+            format: url ? schema.format : 'danger'
+          },
+          options: {
+            showValid: true,
+            resolve: submit 
+          }
+        }))
+      }
     })
   } else if (id != null) {
     clearCache()
