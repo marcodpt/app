@@ -262,12 +262,7 @@ export default ({
         return submit({})
       } else {
         return wrap(jsb({
-          schema: {
-            ...updateSchema(config, schema, false, Q, [], Href),
-            links: [back],
-            ui: url ? schema.ui : 'card',
-            format: url ? schema.format : 'danger'
-          },
+          schema: schema,
           options: {
             showValid: true,
             resolve: submit 

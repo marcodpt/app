@@ -87,6 +87,13 @@ const start = ({
   const Cache = {
     '@interfaces': interfaces
   }
+  const clearCache = () => {
+    Object.keys(Cache).forEach(k => {
+      if (k.substr(0, 1) != '@') {
+        delete Cache[k]
+      }
+    })
+  }
   const getter = url => {
     const U = url.split('***')
     const O = Cache['api/operators']
@@ -111,12 +118,16 @@ const start = ({
       })
     }
   }
+  const postter = post(navbar)
 
   const Deps = {
     config: config,
     wrap: wrap,
     get: getter,
-    post: post(navbar),
+    post: (url, Params, err) => {
+      clearCache()
+      return postter(url, Params, err)
+    },
     back: back,
     html: html,
     graph: graph,
@@ -138,11 +149,7 @@ const start = ({
   var path = getPath()
   window.addEventListener('hashchange', () => {
     if (path != getPath()) {
-      Object.keys(Cache).forEach(k => {
-        if (k.substr(0, 1) != '@') {
-          delete Cache[k]
-        }
-      })
+      clearCache()
       path = getPath()
     }
     update(getUrl())
