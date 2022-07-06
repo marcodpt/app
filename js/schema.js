@@ -85,7 +85,7 @@ const updateSchema = (config, schema, readOnly, X, Ignore, Href) => {
       if (X != null) {
         const b = keyBase(key)
         const d = keyDual(key)
-        const s = b == 'id' ? 'id' : d
+        const s = d.indexOf('_id_') >= 0 ? d : b
         const Y = {}
         Y[b] = null
         Y[d] = null
