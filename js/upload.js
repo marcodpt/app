@@ -16,7 +16,7 @@ export default (params, {get, post, wrap, jsb, back}) => wrap(jsb({
     resolve: ({files}, e) => Promise.all(files.map(file => {
       e.classList.add('mb-5')
       var status = ''
-      return get('api/files?id_='+encodeURIComponent(file.name))
+      return get('api/files?name='+encodeURIComponent(file.name))
         .then(data => {
           if (data && data.length) {
             status = 'ATUALIZADO!'

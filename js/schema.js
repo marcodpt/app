@@ -85,6 +85,7 @@ const updateSchema = (config, schema, readOnly, X, Ignore, Href) => {
       if (X != null) {
         const b = keyBase(key)
         const d = keyDual(key)
+        const s = b == 'id' ? 'id' : d
         const Y = {}
         Y[b] = null
         Y[d] = null
@@ -95,26 +96,26 @@ const updateSchema = (config, schema, readOnly, X, Ignore, Href) => {
             icon: config.CLEAR_ICON,
             ui: config.CLEAR_UI,
             href: resolveHref(Y)
-          } : X._sort == b ? {
+          } : X._sort == s ? {
             rel: 'self',
             ui: config.SORT_UI,
             icon: config.SORT_ASC_ICON,
             href: resolveHref({
-              _sort: '-'+b
+              _sort: '-'+s
             })
-          } : X._sort == ('-'+b) ? {
+          } : X._sort == ('-'+s) ? {
             rel: 'self',
             ui: config.SORT_UI,
             icon: config.SORT_DESC_ICON,
             href: resolveHref({
-              _sort: b
+              _sort: s
             })
           } : {
             rel: 'self',
             ui: config.SORT_UI,
             icon: config.SORT_ICON,
             href: resolveHref({
-              _sort: b
+              _sort: s
             })
           }
         ]
