@@ -23,7 +23,9 @@ export default ({id}, {graph, get}) => {
         id: 'v'+row.id,
         label: row.tables_id_ || 'defaults',
         info: new Promise(resolve => {
-          get('api/get/columns?tables_id='+row.tables_id).then(data => {
+          get(`api/get/columns?tables_id=${
+            row.tables_id
+          }&_sort=sequence`).then(data => {
             resolve(data.map(row =>
               (row.tag < 0 ?  ':' : row.tag > 0 ? '*' : '')+
                 row.name_+': '+(
