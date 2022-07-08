@@ -1,6 +1,6 @@
 import {
   navbar, route, start
-} from 'https://cdn.jsdelivr.net/gh/marcodpt/app@0.1.7/index.js'
+} from 'https://cdn.jsdelivr.net/gh/marcodpt/app@0.1.8/index.js'
 
 navbar({
   type: 'dark',
