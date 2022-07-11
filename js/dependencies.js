@@ -1,7 +1,7 @@
 import spa from 'https://cdn.jsdelivr.net/gh/marcodpt/spa@2.0.0/index.js'
 import query from 'https://cdn.jsdelivr.net/gh/marcodpt/query@0.0.2/index.js'
 import jsb from
-  'https://cdn.jsdelivr.net/gh/marcodpt/json-schema-bootstrap@0.4.4/index.js'
+  'https://cdn.jsdelivr.net/gh/marcodpt/json-schema-bootstrap@0.4.5/index.js'
 import ui from
   'https://cdn.jsdelivr.net/gh/marcodpt/json-schema-bootstrap@0.4.1/interfaces.js'
 import navbar from 'https://cdn.jsdelivr.net/gh/marcodpt/navbar@0.0.4/index.js'
