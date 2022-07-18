@@ -205,7 +205,14 @@ export default ({
           ) {
             Files[key] = data[key]
             data[key] = 0
-            const N = Files[key].name.split(".")
+
+            var name = Files[key].name
+            name = name || 'file'
+            name = name.replace(/[^a-zA-Z~_0-9\-\.]/g, c => '')
+            if (!/^[a-zA-Z]$/.test(name.substr(0, 1))) {
+              name = 'file_'+name
+            }
+            const N = name.split(".")
             N[0] += '_'+Math.random().toString(36).substr(2, 9)
             Files[key].name = N.join(".")
           }
