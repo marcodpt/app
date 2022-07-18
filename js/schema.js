@@ -246,7 +246,9 @@ export default ({
             console.log(err)
           })
         }).then(() => {
-          const isLogin = /^(login|logout|switch)$/.test(service)
+          const isLogout = service == 'logout'
+          const isLogin = service == 'login' || service == 'switch'
+          const target = isLogin && config.HOME != null ? config.HOME : '#'
           if (res && res.description) {
             const x = wrap(jsb({
               schema: {
@@ -255,7 +257,7 @@ export default ({
                 format: 'success',
                 links: [{
                   ...back,
-                  href: isLogin ? '#' : back.href
+                  href: isLogin || isLogout ? target : back.href
                 }]
               }
             }))
@@ -267,7 +269,7 @@ export default ({
           } else if (!isLogin) {
             history.back()
           } else {
-            window.location.href = '#'
+            window.location.href = target
           }
         })
       }

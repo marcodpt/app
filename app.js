@@ -88,6 +88,7 @@ route('/chart/:id', ({id}, {html, jsb, chart, graph, get, post}) =>
 
 start({
   LANGUAGE: 'pt',
+  HOME: '#',
   QUERY: {
     _limit: 10,
     _skip: 0
