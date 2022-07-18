@@ -66,8 +66,9 @@ const updateSchema = (config, schema, readOnly, X, Ignore, Href) => {
     Ignore = Ignore || []
     Href = Href || {}
     R.properties = required.filter(key =>
-      (!readOnly || key == 'id' || (key.substr(-1) == '_' && key != 'id_')) &&
-      Ignore.indexOf(keyBase(key)) == -1
+      (!readOnly || key == 'id' || required.indexOf(keyDual(key)) < 0 || (
+        key.substr(-1) == '_' && key != 'id_'
+      )) && Ignore.indexOf(keyBase(key)) == -1
     ).reduce((P, key) => {
       const Q = properties[key]
       P[key] = {
