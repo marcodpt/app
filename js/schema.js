@@ -168,10 +168,25 @@ export default ({
   const path = `api/${service}/${table}`+(id != null ? `/${id}` : '')
   const q = extra.query
   const Q = query(q)
+  const params = query(Object.keys(Q).reduce((P, key) => {
+    if (key.substr(0, 1) != '_') {
+      P[key] = Q[key]
+    }
+    return P
+  }, {}))
   const url = path+(q ? `?${q}` : '')
 
   const Route = (config.ROUTES || {})[table] || {}
-  const Links = Route.links || []
+  const Links = (Route.links || []).map(l => {
+    if (l.href.substr(0, 1) == '#' && params) {
+      return {
+        ...l,
+        href: l.href+(l.href.indexOf('?') >= 0 ? '&' : '?')+params
+      }
+    } else {
+      return l
+    }
+  })
   const Globals = Links.filter(l => l.href.indexOf('{') == -1)
   const Locals = Links.filter(l => l.href.indexOf('{') != -1)
   const Ignore = (Route.ignore || []).map(key => keyBase(key))
@@ -304,12 +319,7 @@ export default ({
       return wrap(jsb({schema: schema}))
     })
   } else {
-    const p = path+'?'+query(Object.keys(Q).reduce((P, key) => {
-      if (key.substr(0, 1) != '_') {
-        P[key] = Q[key]
-      }
-      return P
-    }, {}))
+    const p = path+'?'+params
     if (p != Cache.path) {
       clearCache()
       Cache.path = p
